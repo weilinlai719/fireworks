@@ -5,20 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>weilin's web</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #020205; overflow: hidden; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        canvas { display: block; position: absolute; z-index: 1; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: #020205; overflow: hidden; color: white; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+
+        /* 畫布層：最底層 */
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* UI 層次 */
-        .overlay { position: relative; z-index: 10; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 40px 0; pointer-events: none; }
+        /* UI 層次：設為透明穿透 (none) */
+        .overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100vh; 
+            z-index: 10; display: flex; flex-direction: column; 
+            align-items: center; justify-content: space-between; 
+            padding: 40px 0; pointer-events: none; 
+        }
         
-        .glass-header { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px 40px; text-align: center; pointer-events: auto; }
+        /* 頂部標題 */
+        .glass-header { 
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; 
+            padding: 20px 40px; text-align: center; pointer-events: auto; 
+        }
         
         h1 { margin: 0; font-size: 2.5rem; background: linear-gradient(45deg, #4deeea, #f7d117); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .stats { margin-top: 10px; font-family: monospace; color: #4deeea; font-size: 1.2rem; }
-        .leg{ pointer-events: auto; justify-content: center;  align-items: center;  height: 10vh; }
+        h2 { margin: 5px 0; font-size: 1rem; color: rgba(255, 255, 255, 0.6); }
+        .stats { font-family: monospace; color: #4deeea; font-size: 1.5rem; font-weight: bold; }
+
+        /* 「格子」位置設定：Taipei101 連結區塊 */
+        .leg { 
+            position: absolute; 
+            top: 50%; left: 50%; /* 放在畫面正中央 */
+            transform: translate(-50%, -50%); /* 精確位移到中心點 */
+            pointer-events: auto; 
+            z-index: 11;
+        }
+
+        .leg a {
+            color: #4deeea; text-decoration: none; font-weight: bold;
+            background: rgba(77, 238, 234, 0.1); padding: 12px 24px;
+            border-radius: 12px; border: 1px solid rgba(77, 238, 234, 0.4);
+            transition: 0.3s;
+        }
+        .leg a:hover { background: rgba(77, 238, 234, 0.2); box-shadow: 0 0 15px rgba(77, 238, 234, 0.5); }
+
+        /* 底部按鈕 */
         .footer { pointer-events: auto; margin-bottom: 80px; }
-        .github-btn { color: white; text-decoration: none; background: #333; padding: 10px 20px; border-radius: 50px; font-size: 0.9rem; transition: 0.3s; border: 1px solid #555; }
+        .github-btn { 
+            color: white; text-decoration: none; background: #333; 
+            padding: 10px 25px; border-radius: 50px; font-size: 0.9rem; 
+            transition: 0.3s; border: 1px solid #555; 
+        }
         .github-btn:hover { background: #444; box-shadow: 0 0 15px #4deeea; }
     </style>
 </head>
@@ -27,12 +65,14 @@
 <div class="overlay">
     <div class="glass-header">
         <h1>weilin's website</h1>
-        <h2>Time</h2>
+        <h2>Current Time</h2>
         <div class="stats" id="clock">00:00:00</div>
     </div>
+
     <div class="leg">
-<a href="https://weilinlai719.github.io/fireworks/Taipei101.html" target="_blank" rel="noopener noreferrer">開啟Taipei101 fireworks</a>
+        <a href="https://weilinlai719.github.io/fireworks/Taipei101.html" target="_blank">🏮 開啟 Taipei 101 Fireworks</a>
     </div>
+
     <div class="footer">
         <a href="https://github.com/weilinlai719" class="github-btn">View on GitHub</a>
     </div>
@@ -52,14 +92,12 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 時鐘功能
     function updateClock() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString('zh-TW', {hour12: false});
     }
     setInterval(updateClock, 1000);
 
-    // 煙火粒子
     class Particle {
         constructor(x, y, color) {
             this.x = x; this.y = y; this.color = color;
@@ -71,7 +109,7 @@
         }
         update() {
             this.x += this.vx; this.y += this.vy;
-            this.vy += 0.08; this.alpha -= 0.012;
+            this.vy += 0.08; this.alpha -= 0.015;
         }
         draw() {
             ctx.globalAlpha = this.alpha;
@@ -82,42 +120,38 @@
 
     function createFirework(x, y) {
         const color = `hsl(${Math.random() * 360}, 100%, 65%)`;
-        for (let i = 0; i < 60; i++) particles.push(new Particle(x, y, color));
+        for (let i = 0; i < 80; i++) particles.push(new Particle(x, y, color));
     }
 
-    window.addEventListener('mousedown', (e) => createFirework(e.clientX, e.clientY));
-
-    function draw101() {
-        const cx = canvas.width / 2;
-        const b = canvas.height;
-        for(let i=0; i<8; i++) {
-            const y = b - 80 - (i*55);
-            ctx.fillStyle = '#102030';
-            ctx.strokeStyle = '#4deeea';
-            ctx.beginPath();
-            ctx.moveTo(cx-35, y); ctx.lineTo(cx+35, y); ctx.lineTo(cx+45, y-50); ctx.lineTo(cx-45, y-50);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
+    // 點擊事件：排除 A 標籤，其餘地方皆可觸發煙火
+    window.addEventListener('mousedown', (e) => {
+        if (e.target.tagName !== 'A') {
+            createFirework(e.clientX, e.clientY);
         }
-        // 尖塔
-        ctx.strokeStyle = "white"; ctx.beginPath(); ctx.moveTo(cx, b-80-8*55); ctx.lineTo(cx, b-80-8*55-100); ctx.stroke();
-    }
+    });
 
     function animate() {
+        // 背景塗抹，維持殘影
+        ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgba(2, 2, 5, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].update();
             particles[i].draw();
             if (particles[i].alpha <= 0) particles.splice(i, 1);
         }
-        draw101();
-        if (Math.random() < 0.03) createFirework(Math.random()*canvas.width, Math.random()*canvas.height*0.4);
+
+        // 隨機自動放煙火
+        if (Math.random() < 0.03) {
+            createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.4);
+        }
+        
         requestAnimationFrame(animate);
     }
     animate();
 </script>
 </body>
-
 </html>
 
 
