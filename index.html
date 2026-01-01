@@ -97,55 +97,7 @@
         document.getElementById('clock').innerText = now.toLocaleTimeString('zh-TW', {hour12: false});
     }
     setInterval(updateClock, 1000);
-    // 元旦倒數功能
-function updateCountdown() {
-    const now = new Date();
-    // 設定目標時間：2026年1月1日 00:00:00
-    const target = new Date("January 1, 2026 00:00:00");
-    const diff = target - now; // 剩餘毫秒數
-
-    if (diff <= 0) {
-        document.getElementById('clock').innerText = "Happy New Year 2026!";
-        return;
-    }
-
-    // 計算 時、分、秒
-    // 這裡我們只顯示小時以內的倒數（適合跨年當天），如果要包含天數可以再加上天數計算
-    const hours = Math.floor((diff / (1000 * 60 * 60)));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    // 格式化數字，保持兩位數 (例如 05:09:01)
-    const hDisplay = hours.toString().padStart(2, '0');
-    const mDisplay = minutes.toString().padStart(2, '0');
-    const sDisplay = seconds.toString().padStart(2, '0');
-
-    document.getElementById('clock').innerText = `${hDisplay}:${mDisplay}:${sDisplay}`;
-}
-
-// 每一秒更新一次
-setInterval(updateCountdown, 1000);
-// 網頁開啟後立刻執行一次，避免出現 00:00:00 的空白感
-updateCountdown();
-    class Particle {
-        constructor(x, y, color) {
-            this.x = x; this.y = y; this.color = color;
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 5 + 1;
-            this.vx = Math.cos(angle) * speed;
-            this.vy = Math.sin(angle) * speed;
-            this.alpha = 1;
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            this.vy += 0.08; this.alpha -= 0.015;
-        }
-        draw() {
-            ctx.globalAlpha = this.alpha;
-            ctx.fillStyle = this.color;
-            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
-        }
-    }
+   
 
     function createFirework(x, y) {
         const color = `hsl(${Math.random() * 360}, 100%, 65%)`;
@@ -182,6 +134,7 @@ updateCountdown();
 </script>
 </body>
 </html>
+
 
 
 
