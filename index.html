@@ -98,7 +98,25 @@
     }
     setInterval(updateClock, 1000);
    
-
+     class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 1;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 1;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.vy += 0.08; this.alpha -= 0.015;
+        }
+        draw() {
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+        }
+    }
     function createFirework(x, y) {
         const color = `hsl(${Math.random() * 360}, 100%, 65%)`;
         for (let i = 0; i < 80; i++) particles.push(new Particle(x, y, color));
@@ -134,6 +152,7 @@
 </script>
 </body>
 </html>
+
 
 
 
