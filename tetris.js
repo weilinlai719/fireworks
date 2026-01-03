@@ -1,23 +1,38 @@
 const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
-context.scale(30, 30);//遊戲畫布
+context.scale(30, 30);
+
 const nextCanvas = document.getElementById('next');
 const nextContext = nextCanvas.getContext('2d');
-nextContext.scale(30, 30); //預覽
-const keys = {
-    left: false,// 按鍵狀態
-    right: false,
-    down: false
-};
-let requestID; // 全域宣告影格 ID，以便隨時停止
+nextContext.scale(30, 30);
 
-// 1. 定義顏色
+// 1. 遊戲狀態與設定
 const colors = [
     null,
     '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF',
 ];
 
-// 2. 建立方塊
+const keys = { left: false, right: false, down: false };
+let dropCounter = 0;
+let dropInterval = 1000;
+let lastTime = 0;
+let moveCounter = 0;
+const moveInterval = 60; // 連續移動速度 (ms)
+let requestID;
+let isGameStarted = false;
+
+const player = {
+    pos: { x: 0, y: 0 },
+    matrix: null,
+    nextMatrix: null,
+    score: 0,
+    level: 1,
+    totalLines: 0,
+};
+
+const arena = Array.from({ length: 20 }, () => Array(12).fill(0));
+
+// 2. 方塊生成
 function createPiece(type) {
     if (type === 'T') return [[0, 1, 0], [1, 1, 1], [0, 0, 0]];
     if (type === 'I') return [[0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0], [0, 2, 0, 0]];
@@ -27,47 +42,8 @@ function createPiece(type) {
     if (type === 'J') return [[0, 6, 0], [0, 6, 0], [6, 6, 0]];
     if (type === 'O') return [[7, 7], [7, 7]];
 }
-function drawGrid() {
-    context.strokeStyle = 'rgba(255, 255, 255, 0.15)'; // 設定線條顏色為半透明白色
-    context.lineWidth = 0.05; // 因為我們用了 context.scale(30)，所以線條要設得很細
 
-    // 畫垂直線
-    for (let x = 0; x <= arena[0].length; x++) {
-        context.beginPath();
-        context.moveTo(x, 0);
-        context.lineTo(x, arena.length);
-        context.stroke();
-    }
-
-    // 畫水平線
-    for (let y = 0; y <= arena.length; y++) {
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(arena[0].length, y);
-        context.stroke();
-    }
-}
-// 3. 繪製
-function draw() {
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
-    drawMatrix(arena, {x: 0, y: 0});
-    drawMatrix(player.matrix, player.pos);
-}
-
-function drawMatrix(matrix, offset) {
-    matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                context.fillStyle = colors[value];
-                context.fillRect(x + offset.x, y + offset.y, 1, 1);
-            }
-        });
-    });
-}
-
-// 4. 碰撞與合併
+// 3. 碰撞與移動核心
 function collide(arena, player) {
     const [m, o] = [player.matrix, player.pos];
     for (let y = 0; y < m.length; ++y) {
@@ -80,23 +56,14 @@ function collide(arena, player) {
     return false;
 }
 
-function merge(arena, player) {
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
-        });
-    });
-}
-
-// 5. 旋轉邏輯 (補上這部分)
-function rotate(matrix, dir) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
-        }
+function playerMove(dir) {
+    player.pos.x += dir;
+    if (collide(arena, player)) {
+        player.pos.x -= dir;
+        return false;
     }
-    if (dir > 0) matrix.forEach(row => row.reverse());
-    else matrix.reverse();
+    moveCounter = 0; // 重置計時器以獲得更好的手感
+    return true;
 }
 
 function playerRotate(dir) {
@@ -113,72 +80,17 @@ function playerRotate(dir) {
         }
     }
 }
-// 封裝一個簡單的功能綁定函式
-function bindBtn(id, action) {
-    const btn = document.getElementById(id);
-    btn.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // 防止觸發捲動或其他手勢
-        action();
-        
-        // 加入震動回饋
-        if (window.navigator.vibrate) window.navigator.vibrate(20);
-    }, { passive: false });
-}
 
-// 綁定按鍵與對應函式
-bindBtn('btnLeft', () => playerMove(-1));
-bindBtn('btnRight', () => playerMove(1));
-bindBtn('btnDown', () => playerDrop());
-bindBtn('btnRotate', () => playerRotate(1));
-bindBtn('btnHardDrop', () => playerHardDrop());
-
-
-// 6. 消除與動作
-function arenaSweep() {
-
-    let rowCount = 0; // 這次消了幾行
-    outer: for (let y = arena.length - 1; y > 0; --y) {
-        for (let x = 0; x < arena[y].length; ++x) {
-            if (arena[y][x] === 0) continue outer;
+function rotate(matrix, dir) {
+    for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) {
+            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
         }
-        const row = arena.splice(y, 1)[0].fill(0);
-        arena.unshift(row);
-        ++y;
-        
-        rowCount++;
-        totalLines++; // 累計總消行數
     }
+    if (dir > 0) matrix.forEach(row => row.reverse());
+    else matrix.reverse();
+}
 
-    if (rowCount > 0) {
-        // 分數算法：消越多行倍率越高
-        player.score += rowCount * 10 * level; 
-        
-        // 升級邏輯：每消 10 行升一級
-        let newLevel = Math.floor(totalLines / 10) + 1;
-        if (newLevel > level) {
-            level = newLevel;
-            // 速度加快：每次升級減少 100ms，最低極限 100ms
-            dropInterval = Math.max(100, 800 - (level - 1) * 90);
-        }
-         updateScore();
-    }
-   
-}
-function playerHardDrop() {
-    // 當沒有碰撞時，一直往下移
-    while (!collide(arena, player)) {
-        player.pos.y++;
-    }
-    // 因為迴圈停止是因為發生了碰撞，所以要往回退一格
-    player.pos.y--;
-    
-    // 立即固定方塊（這通常在你原本 playerDrop 的碰撞邏輯裡）
-    // 這裡調用你原本處理「落地」的邏輯，例如：
-    merge(arena, player);
-    playerReset();
-    arenaSweep();
-    updateScore();
-}
 function playerDrop() {
     player.pos.y++;
     if (collide(arena, player)) {
@@ -186,53 +98,153 @@ function playerDrop() {
         merge(arena, player);
         playerReset();
         arenaSweep();
+        updateScore();
     }
     dropCounter = 0;
 }
 
-function playerMove(dir) {
-    player.pos.x += dir;
-    if (collide(arena, player)) player.pos.x -= dir;
+function playerHardDrop() {
+    while (!collide(arena, player)) {
+        player.pos.y++;
+    }
+    player.pos.y--;
+    merge(arena, player);
+    playerReset();
+    arenaSweep();
+    updateScore();
+    if (window.navigator.vibrate) window.navigator.vibrate([20, 10, 20]);
+}
+
+// 4. 投影功能 (Ghost Piece)
+function getGhost(player, arena) {
+    const ghost = {
+        pos: { x: player.pos.x, y: player.pos.y },
+        matrix: player.matrix
+    };
+    while (!collide(arena, ghost)) {
+        ghost.pos.y++;
+    }
+    ghost.pos.y--;
+    return ghost;
+}
+
+// 5. 繪製邏輯
+function draw() {
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawGrid();
+
+    const ghost = getGhost(player, arena);
+    drawMatrix(context, ghost.matrix, ghost.pos, true); 
+    drawMatrix(context, arena, { x: 0, y: 0 });
+    drawMatrix(context, player.matrix, player.pos);
+}
+
+function drawMatrix(ctx, matrix, offset, isGhost = false) {
+    matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                if (isGhost) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 0.05;
+                    ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    ctx.strokeRect(x + offset.x, y + offset.y, 1, 1);
+                } else {
+                    ctx.fillStyle = colors[value];
+                    ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+                }
+            }
+        });
+    });
+}
+
+function drawGrid() {
+    context.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    context.lineWidth = 0.02;
+    for (let x = 0; x <= arena[0].length; x++) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, arena.length);
+        context.stroke();
+    }
+    for (let y = 0; y <= arena.length; y++) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(arena[0].length, y);
+        context.stroke();
+    }
+}
+
+function drawNext() {
+    nextContext.fillStyle = '#000';
+    nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+    const matrix = player.nextMatrix;
+    const offset = {
+        x: (nextCanvas.width / 30 - matrix[0].length) / 2,
+        y: (nextCanvas.height / 30 - matrix.length) / 2
+    };
+    drawMatrix(nextContext, matrix, offset);
+}
+
+// 6. 遊戲流程
+function arenaSweep() {
+    let rowCount = 0;
+    outer: for (let y = arena.length - 1; y > 0; --y) {
+        for (let x = 0; x < arena[y].length; ++x) {
+            if (arena[y][x] === 0) continue outer;
+        }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        ++y;
+        rowCount++;
+    }
+
+    if (rowCount > 0) {
+        player.totalLines += rowCount;
+        player.score += rowCount * 10 * player.level;
+        player.level = Math.floor(player.totalLines / 10) + 1;
+        dropInterval = Math.max(100, 1000 - (player.level - 1) * 100);
+    }
+}
+
+function merge(arena, player) {
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+        });
+    });
 }
 
 function playerReset() {
     const pieces = 'ILJOTSZ';
-  // 如果是第一次啟動，先生成兩塊
-    if (player.nextMatrix === null) {
+    if (!player.nextMatrix) {
         player.nextMatrix = createPiece(pieces[pieces.length * Math.random() | 0]);
     }
-    // 將「下一塊」交給玩家，並重新生成「新的下一塊」
     player.matrix = player.nextMatrix;
     player.nextMatrix = createPiece(pieces[pieces.length * Math.random() | 0]);
     player.pos.y = 0;
     player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+
     drawNext();
     if (collide(arena, player)) {
-        cancelAnimationFrame(requestID); // 停止動畫
-        alert("遊戲結束！您的得分是：" + player.score);
-        location.reload(); // 刷新網頁
+        cancelAnimationFrame(requestID);
+        alert("GAME OVER! Score: " + player.score);
+        location.reload();
     }
 }
-
-// 7. 循環控制
-let dropCounter = 0;
-let dropInterval = 1000;
-let lastTime = 0;
-let level = 1;
-let totalLines = 0;
-
-let moveCounter = 0;
-const moveInterval = 50; // 每 0.1 秒移動一格，可以按喜好調整
 
 function update(time = 0) {
     const deltaTime = time - lastTime;
     lastTime = time;
 
+    // 持續移動邏輯
     moveCounter += deltaTime;
     if (moveCounter > moveInterval) {
         if (keys.left) playerMove(-1);
         if (keys.right) playerMove(1);
-        if (keys.down) playerDrop(); // 長按向下鍵也會變得很順滑
+        if (keys.down) playerDrop();
         moveCounter = 0;
     }
 
@@ -242,76 +254,62 @@ function update(time = 0) {
     }
 
     draw();
-    requestAnimationFrame(update);
+    requestID = requestAnimationFrame(update);
 }
 
 function updateScore() {
-    document.getElementById('score').innerText = "分數：" + player.score;
-    document.getElementById('level').innerText = "等級：" + level;
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    if (scoreEl) scoreEl.innerText = "分數：" + player.score;
+    if (levelEl) levelEl.innerText = "等級：" + player.level;
 }
 
-const arena = Array.from({length: 20}, () => Array(12).fill(0));
-const player = { pos: {x: 0, y: 0},matrix: null,nextMatrix: null, score: 0,};
-// 鍵盤監聽（增加方向鍵上 = 旋轉）
+// 7. 事件監聽
 document.addEventListener('keydown', event => {
-const blockedKeys = [
-        32, // Space (空白鍵)
-        37, // Left (左)
-        38, // Up (上)
-        39, // Right (右)
-        40  // Down (下)
-    ];
+    if (event.repeat) return;
+    if ([32, 37, 38, 39, 40].includes(event.keyCode)) event.preventDefault();
 
-    if (blockedKeys.includes(event.keyCode)) {
-        event.preventDefault();  }
-    if (event.keyCode === 37) keys.left = true;
-    else if (event.keyCode === 39) keys.right = true;
-    else if (event.keyCode === 40) keys.down = true;   // 下
-    else if (event.keyCode === 38) playerRotate(1); // 上 (旋轉)
-    else if (event.keyCode === 32)  playerHardDrop();// 空白鍵 (硬降)
-    
+    if (event.keyCode === 37) { keys.left = true; playerMove(-1); }
+    else if (event.keyCode === 39) { keys.right = true; playerMove(1); }
+    else if (event.keyCode === 40) { keys.down = true; }
+    else if (event.keyCode === 38) { playerRotate(1); }
+    else if (event.keyCode === 32) { playerHardDrop(); }
 });
+
 document.addEventListener('keyup', event => {
     if (event.keyCode === 37) keys.left = false;
     if (event.keyCode === 39) keys.right = false;
     if (event.keyCode === 40) keys.down = false;
 });
-function drawNext() {
-    // 清空小畫布
-    nextContext.fillStyle = '#000';
-    nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 
-    // 取得方塊並置中顯示在 4x4 的預覽格內
-    const matrix = player.nextMatrix;
-    
-    // 計算置中位移
-    const offset = {
-        x: (nextCanvas.width / 30 - matrix[0].length) / 2,
-        y: (nextCanvas.height / 30 - matrix.length) / 2
-    };
+function bindBtn(id, action) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        action();
+        if (window.navigator.vibrate) window.navigator.vibrate(15);
+    }, { passive: false });
+}
 
-    matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                nextContext.fillStyle = colors[value];
-                nextContext.fillRect(x + offset.x, y + offset.y, 1, 1);
-            }
-        });
-    });
-}
-let isGameStarted = false;
-function startGame() {
-    if (isGameStarted) return; // 防止重複啟動
-    isGameStarted = true;
-    playerReset();
-    updateScore();
-    update();
-}
+bindBtn('btnLeft', () => playerMove(-1));
+bindBtn('btnRight', () => playerMove(1));
+bindBtn('btnDown', () => playerDrop());
+bindBtn('btnRotate', () => playerRotate(1));
+bindBtn('btnHardDrop', () => playerHardDrop());
 
 const startBtn = document.getElementById('startButton');
 if (startBtn) {
-    startBtn.addEventListener('click', startGame);
+    startBtn.addEventListener('click', () => {
+        if (!isGameStarted) {
+            isGameStarted = true;
+            playerReset();
+            updateScore();
+            update();
+        }
+    });
 }
+
 
 
 
