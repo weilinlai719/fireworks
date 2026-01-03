@@ -4,7 +4,11 @@ context.scale(30, 30);//遊戲畫布
 const nextCanvas = document.getElementById('next');
 const nextContext = nextCanvas.getContext('2d');
 nextContext.scale(30, 30); //預覽
-
+const keys = {
+    left: false,// 按鍵狀態
+    right: false,
+    down: false
+};
 let requestID; // 全域宣告影格 ID，以便隨時停止
 
 // 1. 定義顏色
@@ -217,15 +221,28 @@ let lastTime = 0;
 let level = 1;
 let totalLines = 0;
 
+let moveCounter = 0;
+const moveInterval = 100; // 每 0.1 秒移動一格，可以按喜好調整
+
 function update(time = 0) {
     const deltaTime = time - lastTime;
     lastTime = time;
 
+    moveCounter += deltaTime;
+    if (moveCounter > moveInterval) {
+        if (keys.left) playerMove(-1);
+        if (keys.right) playerMove(1);
+        if (keys.down) playerDrop(); // 長按向下鍵也會變得很順滑
+        moveCounter = 0;
+    }
+
     dropCounter += deltaTime;
-    if (dropCounter > dropInterval) playerDrop();
+    if (dropCounter > dropInterval) {
+        playerDrop();
+    }
 
     draw();
-    requestID = requestAnimationFrame(update);
+    requestAnimationFrame(update);
 }
 
 function updateScore() {
@@ -247,12 +264,17 @@ const blockedKeys = [
 
     if (blockedKeys.includes(event.keyCode)) {
         event.preventDefault();  }
-    if (event.keyCode === 37) playerMove(-1);      // 左
-    else if (event.keyCode === 39) playerMove(1);   // 右
-    else if (event.keyCode === 40) playerDrop();    // 下
+    if (event.keyCode === 37) keys.left = true;
+    else if (event.keyCode === 39) keys.right = true;
+    else if (event.keyCode === 40) keys.down = true;   // 下
     else if (event.keyCode === 38) playerRotate(1); // 上 (旋轉)
     else if (event.keyCode === 32)  playerHardDrop();// 空白鍵 (硬降)
     
+});
+document.addEventListener('keyup', event => {
+    if (event.keyCode === 37) keys.left = false;
+    if (event.keyCode === 39) keys.right = false;
+    if (event.keyCode === 40) keys.down = false;
 });
 function drawNext() {
     // 清空小畫布
@@ -290,4 +312,5 @@ const startBtn = document.getElementById('startButton');
 if (startBtn) {
     startBtn.addEventListener('click', startGame);
 }
+
 
