@@ -266,8 +266,16 @@ function updateScore() {
 
 // 7. 事件監聽
 document.addEventListener('keydown', event => {
-    if (event.repeat) return;
-    if ([32, 37, 38, 39, 40].includes(event.keyCode)) event.preventDefault();
+   const blockedKeys = [32, 37, 38, 39, 40];
+    if (blockedKeys.includes(event.keyCode)) {
+        // 1. 立即停止瀏覽器的預設捲動行為
+        event.preventDefault(); 
+        // 2. 停止事件繼續向上冒泡
+        event.stopPropagation(); 
+    }
+    if (event.repeat && (event.keyCode === 38 || event.keyCode === 32)) {
+        return; 
+    }
 
     if (event.keyCode === 37) { keys.left = true; playerMove(-1); }
     else if (event.keyCode === 39) { keys.right = true; playerMove(1); }
@@ -309,6 +317,7 @@ if (startBtn) {
         }
     });
 }
+
 
 
 
