@@ -230,7 +230,7 @@ function playerReset() {
     drawNext();
     if (collide(arena, player)) {
         cancelAnimationFrame(requestID);
-        alert("GAME OVER! Score: " + player.score);
+        alert("遊戲結束！ 你的分數是: " + player.score);
         location.reload();
     }
 }
