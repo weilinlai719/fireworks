@@ -237,6 +237,16 @@ const arena = Array.from({length: 20}, () => Array(12).fill(0));
 const player = { pos: {x: 0, y: 0},matrix: null,nextMatrix: null, score: 0,};
 // 鍵盤監聽（增加方向鍵上 = 旋轉）
 document.addEventListener('keydown', event => {
+const blockedKeys = [
+        32, // Space (空白鍵)
+        37, // Left (左)
+        38, // Up (上)
+        39, // Right (右)
+        40  // Down (下)
+    ];
+
+    if (blockedKeys.includes(event.keyCode)) {
+        event.preventDefault();  }
     if (event.keyCode === 37) playerMove(-1);      // 左
     else if (event.keyCode === 39) playerMove(1);   // 右
     else if (event.keyCode === 40) playerDrop();    // 下
