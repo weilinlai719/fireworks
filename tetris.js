@@ -17,7 +17,7 @@ let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
 let moveCounter = 0;
-const moveInterval = 60; // 連續移動速度 (ms)
+const moveInterval = 80; // 連續移動速度 (ms)
 let requestID;
 let isGameStarted = false;
 
