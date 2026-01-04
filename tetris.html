@@ -126,7 +126,11 @@
     
             <button class="start-button" id="startButton">開始遊戲</button>
         </div>
-
+        <div class="controls">
+    <label for="speedRange">左右移動速度 (毫秒): </label>
+    <input type="range" id="speedRange" min="20" max="200" value="60">
+    <span id="speedValue">60</span> ms
+</div>
         <div class="game-area">
             <canvas id="tetris" width="360" height="600"></canvas>
 <div class="controls">
@@ -148,5 +152,4 @@
 
     <script src="tetris.js"></script>
 </body>
-
 </html>
