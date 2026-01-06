@@ -12,10 +12,8 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
         }
 
-        /* 畫布層：最底層 */
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* UI 容器層：使用 Flexbox 自動分配空間 */
         .overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100vh; 
             z-index: 10; display: flex; flex-direction: column; 
@@ -24,7 +22,6 @@
             box-sizing: border-box;
         }
         
-        /* 頂部時鐘區塊 */
         .glass-header { 
             background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); 
             border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; 
@@ -35,7 +32,6 @@
         h2 { margin: 5px 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); letter-spacing: 2px; text-transform: uppercase; }
         .stats { font-family: monospace; color: #4deeea; font-size: 2rem; font-weight: bold; }
 
-        /* 中間選單容器 */
         .menu-container {
             display: flex; flex-direction: column; gap: 15px;
             pointer-events: auto; 
@@ -53,12 +49,12 @@
             transform: translateY(-2px);
         }
 
-        /* 底部按鈕 */
         .footer { pointer-events: auto; }
         .github-btn { 
             color: white; text-decoration: none; background: #333; 
             padding: 10px 25px; border-radius: 50px; font-size: 0.85rem; 
             transition: 0.3s; border: 1px solid #555; 
+            display: inline-block;
         }
         .github-btn:hover { background: #444; box-shadow: 0 0 15px #4deeea; }
     </style>
@@ -75,8 +71,11 @@
     <div class="menu-container">
         <a href="https://weilinlai719.github.io/personal/Taipei101.html" class="btn-link" target="_blank">🏮 Taipei 101 Fireworks</a>
         <a href="https://weilinlai719.github.io/personal/tetris" class="btn-link" target="_blank">🕹️ Tetris Game</a>
-        <a herf="https://weilinlai719.github.io/luckydraw/"  class="btn-link" target="_blank">抽獎器</a>
-        <a href="https://github.com/weilinlai719" class="github-btn">View on GitHub</a>
+        <a href="https://weilinlai719.github.io/luckydraw/" class="btn-link" target="_blank">🎁 抽獎器</a>
+    </div>
+
+    <div class="footer">
+        <a href="https://github.com/weilinlai719" class="github-btn" target="_blank">View on GitHub</a>
     </div>
 </div>
 
@@ -87,7 +86,6 @@
     const ctx = canvas.getContext('2d');
     let particles = [];
 
-    // 畫布自動縮放
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -95,7 +93,6 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 更新即時時鐘
     function updateClock() {
         const now = new Date();
         const hours = now.getHours().toString().padStart(2, '0');
@@ -104,9 +101,8 @@
         document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
     }
     setInterval(updateClock, 1000);
-    updateClock(); // 初始化執行
+    updateClock();
 
-    // 粒子系統
     class Particle {
         constructor(x, y, color) {
             this.x = x; this.y = y; this.color = color;
@@ -132,14 +128,12 @@
         for (let i = 0; i < 80; i++) particles.push(new Particle(x, y, color));
     }
 
-    // 點擊事件：排除 A 標籤，讓背景可以放煙火
     window.addEventListener('mousedown', (e) => {
         if (e.target.tagName !== 'A' && !e.target.closest('.glass-header')) {
             createFirework(e.clientX, e.clientY);
         }
     });
 
-    // 動畫迴圈
     function animate() {
         ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgba(2, 2, 5, 0.2)';
@@ -151,7 +145,6 @@
             if (particles[i].alpha <= 0) particles.splice(i, 1);
         }
 
-        // 隨機背景煙火
         if (Math.random() < 0.03) {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.4);
         }
