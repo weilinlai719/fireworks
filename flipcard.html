@@ -198,7 +198,19 @@
             });
             pagenumDisplay.textContent = `Page ${currentPage + 1} / ${Math.ceil(cards.length / cardsPerPage)}`;
         }
-
+          document.addEventListener('keydown', event => {
+        if (event.keyCode === 39) { 
+             if ((currentPage + 1) * cardsPerPage < cards.length) {
+                currentPage++;
+                showPage(currentPage);
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            } }
+        else if (event.keyCode === 37) {  if (currentPage > 0) {
+                currentPage--;
+                showPage(currentPage);
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            } }
+            });
         nextPageBtn.addEventListener('click', () => {
             if ((currentPage + 1) * cardsPerPage < cards.length) {
                 currentPage++;
@@ -219,4 +231,5 @@
     </script>
     </body>
 </html>
+
 
