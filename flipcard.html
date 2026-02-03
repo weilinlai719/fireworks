@@ -12,7 +12,7 @@
             --transition-speed: 0.6s;
         }
         body {
-            padding-top: 2.5%;
+            padding-top: 2.5%;  
             padding-bottom: 2.5%;
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
@@ -30,6 +30,7 @@
             width: 300px;
             height: 200px;
             perspective: 1000px; 
+
         }
         .flip-card-inner {
             position: relative;
@@ -115,6 +116,7 @@
                 height: 63.5px; 
                 max-width: 300px;
                 margin-bottom: 5px;
+                z-index: 1;
             }
 
             .flip-card-inner.is-flipped {
@@ -231,10 +233,16 @@
         });
         showPage(currentPage);
     }
-    function toggleFlip(card) {
-    const inner = card.querySelector('.flip-card-inner');
-    inner.classList.toggle('is-flipped');
-}
+   function cardToggle(element) {
+    if (window.innerWidth <= 768) {
+        const inner = element.querySelector('.flip-card-inner');
+        inner.classList.toggle('is-flipped');
+    }
+    }
     </script>
     </body>
 </html>
+    </script>
+    </body>
+</html>
+
