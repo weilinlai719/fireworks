@@ -63,33 +63,49 @@
            height: 100%;
             width: 100%;
         }
-        .page-button{
-            position: fixed; 
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: #9aa3a5b2;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-        .page-button:hover{
-            background-color: #6c757db2;
-            transform : translateY(-50%) scale(1.1);
-        }
-        #nextpage {
-        right: 20px;
-        }
+     .page-button {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 54px;             
+    height: 54px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(154, 163, 165, 0.75);  
+    color: white;
+    font-size: 1.8rem;          
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;              
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    transition: all 0.22s ease;
+    z-index: 100;
+    user-select: none;
+}
 
-        #prevpage {
-        left: 20px;
-        }
+
+.page-button:active {
+    transform: translateY(-50%) scale(0.94);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.page-button:disabled,
+.page-button[disabled] {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(1);
+    box-shadow: none;
+}
+
+#prevpage {
+    left: 16px;
+}
+
+#nextpage {
+    right: 16px;
+}
         .pagenumber{
             position: fixed; 
             bottom: 10px; 
@@ -112,7 +128,11 @@
              .flip-card:hover .flip-card-inner {
             transform: rotateY(180deg);
         }
-            
+           .page-button:hover {
+    background-color: #6c757d;  
+    transform: translateY(-50%) scale(1.14);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.28);
+} 
         }
         @media screen and (max-width: 768px) {
             body {
@@ -141,15 +161,11 @@
             justify-content: center;
             z-index: 9999;
         }
-        .page-button {
-        width: 30px;
-        height: 45px;
-        font-size: 18px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        }
+       .page-button {
+        width: 52px;
+        height: 52px;
+        font-size: 1.7rem;
+    }
         #nextpage {
         right: 7.5px;
         }
@@ -163,88 +179,104 @@
 </head>
         <body>
             <div class="loading" id="loading">載入單字中...</div>
-            <div class="page-button" id="nextpage" >></div>
-            <div class="page-button" id="prevpage" ><</div>
+           <button class="page-button" id="prevpage" ><</button>
+            <button class="page-button" id="nextpage">></button>
             <div class="pagenumber" id="pagenumber" onclick="alert('Current Page: ' + (currentPage + 1))">Page 1</div>
-            <script>
-                const loadingEl = document.getElementById('loading');
-                let currentPage = 0;
-             const cardsPerPage = 12;
-    fetch('englishcard.json')
-        .then(response => response.json())
-        .then(data => {
-           loadingEl.remove();
-            data.forEach((item) => {
-                const cardHTML = `
-            <div class="flip-card" onclick="handleCardToggle(this)">
-                <div class="flip-card-inner" >
-                    <div class="flip-card-front">
-                        <p>#${item.id}</p>
-                        <h3>${item.chinese}</h3>
-                    </div>
-                    <div class="flip-card-back">
-                        <p>#${item.id}</p>
-                        <h3>${item.english}</h3>
+           <script>
+const loadingEl = document.getElementById('loading');
+let currentPage = 0;
+const cardsPerPage = 12;
+
+fetch('englishcard.json')
+    .then(response => response.json())
+    .then(data => {
+        loadingEl.remove();
+
+        data.forEach((item) => {
+            const cardHTML = `
+                <div class="flip-card" onclick="handleCardToggle(this)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <p>#${item.id}</p>
+                            <h3>${item.chinese}</h3>
+                        </div>
+                        <div class="flip-card-back">
+                            <p>#${item.id}</p>
+                            <h3>${item.english}</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', cardHTML);
-            });
+            `;
+            document.body.insertAdjacentHTML('beforeend', cardHTML);
+        });
 
-           initPagination();
-        })
-        .catch(error => console.error('Error:', error));
+        initPagination();
+    })
+    .catch(error => {
+        loadingEl.textContent = '載入失敗，請稍後再試';
+        console.error('Error:', error);
+    });
 
-    
-    function initPagination() {
-        const cards = document.querySelectorAll('.flip-card');
-        const nextPageBtn = document.getElementById('nextpage');
-        const prevPageBtn = document.getElementById('prevpage');
-        const pagenumDisplay = document.getElementById('pagenumber');
+function initPagination() {
+    const cards = document.querySelectorAll('.flip-card');
+    const nextPageBtn = document.getElementById('nextpage');
+    const prevPageBtn = document.getElementById('prevpage');
+    const pagenumDisplay = document.getElementById('pagenumber');
 
-        function showPage(page) {
-            cards.forEach((card, index) => {
-                const isVisible = index >= page * cardsPerPage && index < (page + 1) * cardsPerPage;
-                card.style.display = isVisible ? 'block' : 'none';
-            });
-            pagenumDisplay.textContent = `Page ${currentPage + 1} / ${Math.ceil(cards.length / cardsPerPage)}`;
-        }
-        document.addEventListener('keydown', event => {
-        if (event.keyCode === 39) { 
-             if ((currentPage + 1) * cardsPerPage < cards.length) {
-                currentPage++;
-                showPage(currentPage);
-                window.scrollTo({top: 0, behavior: 'smooth'});
-            } }
-        else if (event.keyCode === 37) {  if (currentPage > 0) {
-                currentPage--;
-                showPage(currentPage);
-                window.scrollTo({top: 0, behavior: 'smooth'});
-            } }
-            });
-        nextPageBtn.addEventListener('click', () => {
+    function showPage(page) {
+        cards.forEach((card, index) => {
+            const isVisible = index >= page * cardsPerPage && index < (page + 1) * cardsPerPage;
+            card.style.display = isVisible ? 'block' : 'none';
+            if (isVisible) {
+                const inner = card.querySelector('.flip-card-inner');
+                inner.classList.remove('is-flipped');
+            }
+        });
+
+        const totalPages = Math.ceil(cards.length / cardsPerPage);
+        pagenumDisplay.textContent = `Page ${page + 1} / ${totalPages}`;
+    }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight' || event.key === ' ') {
             if ((currentPage + 1) * cardsPerPage < cards.length) {
                 currentPage++;
                 showPage(currentPage);
-                window.scrollTo({top: 0, behavior: 'smooth'});
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        });
-
-        prevPageBtn.addEventListener('click', () => {
+        } else if (event.key === 'ArrowLeft') {
             if (currentPage > 0) {
                 currentPage--;
                 showPage(currentPage);
-                window.scrollTo({top: 0, behavior: 'smooth'});
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        });
-        showPage(currentPage);
-    }
- function handleCardToggle(cardElement) {
-            const inner = cardElement.querySelector('.flip-card-inner');
-            inner.classList.toggle('is-flipped');
-            }
-    </script>
+        }
+    });
+
+    nextPageBtn.addEventListener('click', () => {
+        if ((currentPage + 1) * cardsPerPage < cards.length) {
+            currentPage++;
+            showPage(currentPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+
+    prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 0) {
+            currentPage--;
+            showPage(currentPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+
+
+    showPage(currentPage);
+}
+
+function handleCardToggle(cardElement) {
+    const inner = cardElement.querySelector('.flip-card-inner');
+    inner.classList.toggle('is-flipped');
+}
+</script>
     </body>
 </html>
