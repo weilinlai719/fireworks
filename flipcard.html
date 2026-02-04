@@ -40,6 +40,9 @@
             transition: transform 0.8s;
             transform-style: preserve-3d;
         }
+          .is-flipped.flip-card-inner {
+             transform: rotateY(180deg);
+    }
         .flip-card-front, .flip-card-back {
             position: absolute;
             width: 100%;
@@ -98,6 +101,13 @@
             padding: 5px 15px;
             font-size: 16px;
         }
+        .loading {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+      font-size: 1.1rem;
+    }
         @media screen and (min-width: 768px) {
              .flip-card:hover .flip-card-inner {
             transform: rotateY(180deg);
@@ -113,15 +123,11 @@
             }
 
             .flip-card {
-                height: 63.5px; 
+                height: 80px; 
                 max-width: 300px;
                 margin-bottom: 5px;
-                z-index: 1;
             }
 
-            .flip-card-inner.is-flipped {
-        transform: rotateY(180deg);
-    }
 
             .flip-card-front p, .flip-card-back p {
                 display: none; 
@@ -156,20 +162,22 @@
         </style>
 </head>
         <body>
+            <div class="loading" id="loading">載入單字中...</div>
             <div class="page-button" id="nextpage" >></div>
             <div class="page-button" id="prevpage" ><</div>
             <div class="pagenumber" id="pagenumber" onclick="alert('Current Page: ' + (currentPage + 1))">Page 1</div>
             <script>
+                const loadingEl = document.getElementById('loading');
                 let currentPage = 0;
              const cardsPerPage = 12;
     fetch('englishcard.json')
         .then(response => response.json())
         .then(data => {
-           
+           loadingEl.remove();
             data.forEach((item) => {
                 const cardHTML = `
-            <div class="flip-card">
-                <div class="flip-card-inner">
+            <div class="flip-card" onclick="handleCardToggle(this)">
+                <div class="flip-card-inner" >
                     <div class="flip-card-front">
                         <p>#${item.id}</p>
                         <h3>${item.chinese}</h3>
@@ -233,16 +241,10 @@
         });
         showPage(currentPage);
     }
-   function cardToggle(element) {
-    if (window.innerWidth <= 768) {
-        const inner = element.querySelector('.flip-card-inner');
-        inner.classList.toggle('is-flipped');
-    }
-    }
+ function handleCardToggle(cardElement) {
+            const inner = cardElement.querySelector('.flip-card-inner');
+            inner.classList.toggle('is-flipped');
+            }
     </script>
     </body>
 </html>
-    </script>
-    </body>
-</html>
-
